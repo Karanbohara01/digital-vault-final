@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getUserProfile, creatorDashboard, updatePassword, mfaSetup, mfaVerify, mfaLoginVerify, forgotPassword, resetPassword, mfaRecover, verifyEmail, getUsers } = require('../controllers/userController');
+const { registerUser, deleteUserByAdmin, updateUserByAdmin, loginUser, getUserProfile, creatorDashboard, updatePassword, mfaSetup, mfaVerify, mfaLoginVerify, forgotPassword, resetPassword, mfaRecover, verifyEmail, getUsers } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware'); // 1. Import the protect middleware
 const { authLimiter } = require('../middleware/rateLimiter'); // 1. Import the limiter
 
@@ -26,4 +26,15 @@ router.put('/reset-password/:token', resetPassword);
 router.post('/mfa/recover', mfaRecover);
 router.get('/verify-email/:token', verifyEmail);
 router.get('/', protect, authorize('admin'), getUsers); // ✅ directly handles /api/users
+// In backend/routes/userRoutes.js
+
+// ... your route for '/' ...
+
+// Add the new route for an admin to update or delete a user
+router.route('/:id')
+    .delete(protect, authorize('admin'), deleteUserByAdmin) // <-- Add this line
+    .put(protect, authorize('admin'), updateUserByAdmin); // <-- Add this line
+
+// router.delete('/:id', protect, authorize('admin'), deleteUserByAdmin); // Delete user by admin
+// router.put('/:id', protect, authorize('admin'), updateUserByAdmin); // Update user
 module.exports = router;

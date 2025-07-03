@@ -11,61 +11,6 @@ const sendEmail = require('../utils/EmailService'); // Import the email service
 
 
 
-// @desc    Register a new user
-// @route   POST /api/users/register
-// @access  Public
-// const registerUser = async (req, res) => {
-//     try {
-//         // Get the data from the request body
-//         const { name, email, password, role } = req.body;
-
-//         // --- Basic Validation ---
-//         if (!name || !email || !password) {
-//             return res.status(400).json({ message: 'Please enter all fields' });
-//         }
-
-//         // Check if user already exists
-//         const userExists = await User.findOne({ email });
-
-//         if (userExists) {
-//             return res.status(400).json({ message: 'User with this email already exists' });
-//         }
-
-//         // --- Create a new user ---
-//         // The password will be automatically hashed because of the pre-save hook in our model
-//         const user = await User.create({
-//             name,
-//             email,
-//             password,
-//             role // 'role' is optional, will default to 'customer' if not provided
-//         });
-
-//         // If user was created successfully
-//         if (user) {
-//             // <<< LOG USER REGISTRATION >>>
-//             await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', { email: user.email, ipAddress: req.ip || req.connection.remoteAddress });
-
-//             // Send a success response
-//             res.status(201).json({
-//                 _id: user._id,
-//                 name: user.name,
-//                 email: user.email,
-//                 role: user.role,
-//                 message: 'User registered successfully!'
-//             });
-//         } else {
-//             res.status(400).json({ message: 'Invalid user data' });
-//         }
-//     } catch (error) {
-//         // Handle any other errors
-//         res.status(500).json({ message: 'Server Error', error: error.message });
-//     }
-// };
-
-// In backend/controllers/userController.js
-
-// In backend/controllers/userController.js
-
 const registerUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
@@ -173,98 +118,6 @@ const verifyEmail = async (req, res) => {
 };
 
 
-
-// @desc    Authenticate user & get token (Login)
-// @route   POST /api/users/login
-// @access  Public
-// const loginUser = async (req, res) => {
-//     try {
-//         const { email, password } = req.body;
-//         // Get user's IP address from the request for logging
-//         const ipAddress = req.ip || req.connection.remoteAddress;
-
-//         if (!email || !password) {
-//             return res.status(400).json({ message: 'Please provide email and password' });
-//         }
-
-//         const user = await User.findOne({ email });
-
-//         // --- Check if user exists AND if password matches ---
-//         if (user && (await user.matchPassword(password))) {
-//             // <<< LOG SUCCESSFUL LOGIN >>>
-//             await logActivity(user._id, 'USER_LOGIN_SUCCESS', 'info', { ipAddress });
-
-//             res.status(200).json({
-//                 _id: user._id,
-//                 name: user.name,
-//                 email: user.email,
-//                 role: user.role,
-//                 token: generateToken(user._id),
-//             });
-//         } else {
-//             // --- If login fails ---
-//             const userId = user ? user._id : null; // Get user ID if user exists, otherwise null
-//             // <<< LOG FAILED LOGIN ATTEMPT >>>
-//             await logActivity(userId, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress });
-
-//             res.status(401).json({ message: 'Invalid email or password' });
-//         }
-//     } catch (error) {
-//         // <<< LOG SERVER ERROR DURING LOGIN >>>
-//         await logActivity(null, 'LOGIN_CONTROLLER_ERROR', 'error', { error: error.message });
-//         res.status(500).json({ message: 'Server Error', error: error.message });
-//     }
-// };
-
-// In backend/controllers/userController.js
-
-// const loginUser = async (req, res) => {
-//     try {
-//         const { email, password } = req.body;
-//         const ipAddress = req.ip || req.connection.remoteAddress;
-
-//         if (!email || !password) {
-//             return res.status(400).json({ message: 'Please provide email and password' });
-//         }
-
-//         const user = await User.findOne({ email });
-
-//         // Check password first
-//         if (user && (await user.matchPassword(password))) {
-//             // <<< --- NEW MFA CHECK --- >>>
-//             // After password is correct, check if user has MFA enabled
-//             if (user.isMfaEnabled) {
-//                 // If MFA is enabled, DO NOT send the final token.
-//                 // Instead, send a signal that MFA is required.
-//                 res.json({
-//                     mfaRequired: true,
-//                     userId: user._id,
-//                 });
-//             } else {
-//                 // If MFA is not enabled, log in as normal.
-//                 await logActivity(user._id, 'USER_LOGIN_SUCCESS', 'info', { ipAddress });
-//                 res.status(200).json({
-//                     _id: user._id,
-//                     name: user.name,
-//                     email: user.email,
-//                     role: user.role,
-//                     token: generateToken(user._id),
-//                 });
-//             }
-//         } else {
-//             // If login fails (wrong password or user not found)
-//             const userId = user ? user._id : null;
-//             await logActivity(userId, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress });
-//             res.status(401).json({ message: 'Invalid email or password' });
-//         }
-//     } catch (error) {
-//         await logActivity(null, 'LOGIN_CONTROLLER_ERROR', 'error', { error: error.message });
-//         res.status(500).json({ message: 'Server Error', error: error.message });
-//     }
-// };
-
-// A final, polished version of the loginUser controller
-
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -330,61 +183,6 @@ const loginUser = async (req, res) => {
     }
 };
 
-// In backend/controllers/userController.js
-// In backend/controllers/userController.js
-
-// const loginUser = async (req, res) => {
-//     try {
-//         const { email, password } = req.body;
-//         const ipAddress = req.ip || req.connection.remoteAddress;
-
-//         const user = await User.findOne({ email });
-
-//         if (user && (await user.matchPassword(password))) {
-//             // --- NEW: Check for password expiry AT THE POINT OF LOGIN ---
-//             if (user.passwordChangedAt) {
-//                 // Define your policy (e.g., 90 days)
-//                 const passwordAgeInDays = (Date.now() - user.passwordChangedAt.getTime()) / (1000 * 60 * 60 * 24);
-//                 if (passwordAgeInDays > 90) {
-//                     await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', { reason: 'Password expired', ipAddress });
-//                     // Send a specific error telling them what to do
-//                     return res.status(403).json({ message: 'Your password has expired. Please use the "Forgot Password" link to reset it.' });
-//                 }
-//             }
-
-//             // Check if email is verified
-//             if (!user.isVerified) {
-//                 return res.status(403).json({ message: 'Please verify your email address to log in.' });
-//             }
-
-//             // If everything passes, proceed with MFA or normal login
-//             if (user.isMfaEnabled) {
-//                 res.json({ mfaRequired: true, userId: user._id });
-//             } else {
-//                 await logActivity(user._id, 'USER_LOGIN_SUCCESS', 'info', { ipAddress });
-//                 res.status(200).json({
-//                     _id: user._id,
-//                     name: user.name,
-//                     email: user.email,
-//                     role: user.role,
-//                     token: generateToken(user._id),
-//                 });
-//             }
-//         } else {
-//             // This handles invalid email or password
-//             const userId = user ? user._id : null;
-//             await logActivity(userId, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress });
-//             res.status(401).json({ message: 'Invalid email or password' });
-//         }
-//     } catch (error) {
-//         await logActivity(null, 'LOGIN_CONTROLLER_ERROR', 'error', { error: error.message });
-//         res.status(500).json({ message: 'Server Error', error: error.message });
-//     }
-// };
-
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private (requires a valid token)
 const getUserProfile = async (req, res) => {
     // The user object is attached to the request in the 'protect' middleware
     if (req.user) {
@@ -533,52 +331,6 @@ const mfaSetup = async (req, res) => {
     }
 };
 
-// In backend/controllers/userController.js
-
-// @desc    Verify the MFA setup token and enable MFA
-// @route   POST /api/users/mfa/verify
-// @access  Private
-// const mfaVerify = async (req, res) => {
-//     try {
-//         // Get the 6-digit token from the user's request
-//         const { token } = req.body;
-
-//         // Find the user in the database
-//         const user = await User.findById(req.user.id);
-
-//         if (!user.mfaTempSecret) {
-//             return res.status(400).json({ message: 'MFA setup has not been initiated.' });
-//         }
-
-//         // Verify the token the user provided against the temporary secret
-//         const isVerified = speakeasy.totp.verify({
-//             secret: user.mfaTempSecret,
-//             encoding: 'base32',
-//             token: token,
-//             window: 1 // Allow for a 30-second time drift
-//         });
-
-//         if (isVerified) {
-//             // If verified, move the secret to the permanent field
-//             user.mfaSecret = user.mfaTempSecret;
-//             user.mfaTempSecret = undefined; // Clear the temporary secret
-//             user.isMfaEnabled = true; // Enable MFA for the user
-//             await user.save();
-
-//             await logActivity(user._id, 'MFA_ENABLE_SUCCESS', 'info', { ipAddress: req.ip });
-//             res.json({ message: 'MFA has been successfully enabled!' });
-//         } else {
-//             await logActivity(user._id, 'MFA_ENABLE_FAIL', 'warn', { ipAddress: req.ip });
-//             res.status(400).json({ message: 'Invalid MFA token. Please try again.' });
-//         }
-//     } catch (error) {
-//         console.error('MFA verification error:', error);
-//         await logActivity(req.user?._id, 'MFA_VERIFY_FAIL', 'error', { error: error.message });
-//         res.status(500).json({ message: 'Server Error during MFA verification' });
-//     }
-// };
-
-// In backend/controllers/userController.js
 
 const mfaVerify = async (req, res) => {
     try {
@@ -788,6 +540,66 @@ const getUsers = async (req, res) => {
     }
 };
 
+// In backend/controllers/userController.js
+
+// @desc    Update user by ID (by an Admin)
+// @route   PUT /api/users/:id
+// @access  Private/Admin
+const updateUserByAdmin = async (req, res) => {
+    console.log('✅ updateUserByAdmin called');
+
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Admin can update name, email, and role.
+        // We don't allow changing the password from this endpoint for security.
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+        user.role = req.body.role || user.role;
+
+        const updatedUser = await user.save();
+
+        await logActivity(req.user.id, 'ADMIN_UPDATE_USER_SUCCESS', 'warn', { updatedUserId: updatedUser._id });
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+        });
+
+    } catch (error) {
+        await logActivity(req.user.id, 'ADMIN_UPDATE_USER_FAIL', 'error', { error: error.message });
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Delete a user by ID (by an Admin)
+// @route   DELETE /api/users/:id
+// @access  Private/Admin
+const deleteUserByAdmin = async (req, res) => {
+    console.log('✅ deleteUserByAdmin called');
+
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (user._id.equals(req.user.id)) {
+            return res.status(400).json({ message: 'Admin cannot delete their own account.' });
+        }
+        await User.findByIdAndDelete(req.params.id);
+        await logActivity(req.user.id, 'ADMIN_DELETE_USER_SUCCESS', 'fatal', { deletedUserId: req.params.id, deletedUserEmail: user.email });
+        res.json({ message: 'User removed successfully' });
+    } catch (error) {
+        await logActivity(req.user.id, 'ADMIN_DELETE_USER_FAIL', 'error', { error: error.message });
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 
 
 
@@ -805,8 +617,8 @@ module.exports = {
     resetPassword, // Export the reset password function
     mfaRecover,// Export the MFA recovery function
     verifyEmail, // Export the email verification function
-    getUsers // Export the getUsers function
-
-
+    getUsers,// Export the getUsers function
+    updateUserByAdmin, // Export the updateUserByAdmin function
+    deleteUserByAdmin // Export the deleteUserByAdmin function
 
 };
