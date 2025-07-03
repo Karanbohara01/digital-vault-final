@@ -1,4 +1,4 @@
-.dashboard-container {
+/* .dashboard-container {
     max-width: 1200px;
     margin: 2rem auto;
     padding: 0 1.5rem;
@@ -292,4 +292,344 @@
     line-height: 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+} */
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 3rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #111;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+}
+
+.dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111;
+    letter-spacing: -0.5px;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    color: #767676;
+    margin: 0.75rem 0 0;
+    font-weight: 400;
+}
+
+.dashboard-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 3rem;
+    padding-bottom: 1px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.dashboard-tabs::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.tab-button {
+    padding: 0.75rem 1.25rem;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #767676;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: #f5f5f5;
+    color: #111;
+}
+
+.tab-button.active {
+    color: #111;
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.dashboard-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.content-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: #111;
+}
+
+.primary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #111;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    border: 1px solid #111;
+}
+
+.primary-button:hover {
+    background: #333;
+    border-color: #333;
+    transform: translateY(-1px);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95rem;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 1rem 1.25rem;
+    background: #fafafa;
+    color: #767676;
+    font-weight: 500;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+}
+
+.data-table td {
+    padding: 1.25rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tr:hover td {
+    background: #fafafa;
+}
+
+.product-info {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.product-thumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    background: #f5f5f5;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.product-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.category-badge {
+    background: #f5f5f5;
+    color: #111;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.action-button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+}
+
+.action-button:hover {
+    background: #f5f5f5;
+    transform: translateY(-1px);
+}
+
+.action-button.edit {
+    color: #111;
+    border-color: #ddd;
+}
+
+.action-button.delete {
+    color: #ff4d4f;
+    border-color: rgba(255, 77, 79, 0.2);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px dashed #eee;
+}
+
+.empty-state p {
+    color: #767676;
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin: 0;
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    padding: 4rem;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #111;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.error-message {
+    color: #ff4d4f;
+    background: rgba(255, 77, 79, 0.05);
+    padding: 1rem 1.25rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 77, 79, 0.1);
+    font-size: 0.95rem;
+}
+
+/* Log table specific styles */
+.data-table pre {
+    margin: 0;
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    max-width: 400px;
+    max-height: 100px;
+    overflow-y: auto;
+    background: #fafafa;
+    padding: 0.75rem;
+    border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1.5rem;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .data-table td,
+    .data-table th {
+        padding: 0.75rem;
+    }
+
+    .action-button {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Add to your stylesheet */
+.secure-logs-container {
+    position: relative;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.log-details {
+    max-height: 120px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.logs-security-note {
+    padding: 12px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.error-message {
+    color: #dc3545;
+    background: #fff3f3;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
 }

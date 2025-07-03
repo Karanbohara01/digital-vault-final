@@ -10,13 +10,18 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/EmailService'); // Import the email service
 
 
-
 const registerUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
         const userExists = await User.findOne({ email });
         if (userExists) {
+            await logActivity(null, 'USER_REGISTER_FAIL', 'warn', {
+                reason: 'Email already exists',
+                email,
+                method: req.method,
+                ipAddress: req.ip,
+            });
             return res.status(400).json({ message: 'User with this email already exists' });
         }
 
@@ -25,44 +30,101 @@ const registerUser = async (req, res) => {
             email,
             password,
             role,
-            isVerified: false // Ensure user starts as unverified
+            isVerified: false
         });
 
-        // --- THIS IS THE CORRECTED LOGIC ---
-        // 1. Generate a verification token (not a password reset token)
         const verificationToken = crypto.randomBytes(32).toString('hex');
-
-        // 2. Hash it and save it to the correct field in the database
-        user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+        user.emailVerificationToken = crypto
+            .createHash('sha256')
+            .update(verificationToken)
+            .digest('hex');
 
         await user.save({ validateBeforeSave: false });
 
-        // 3. Create the correct verification URL
-        // This is the correct line. It creates a link to the backend API endpoint.
         const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
 
-        // 4. Create the correct email message
         const message = `Welcome to Digital Vault! Please click the link below to verify your email address and activate your account:\n\n${verificationURL}`;
 
-        // 5. Send the email
         await sendEmail({
             email: user.email,
             subject: 'Verify Your Email Address for Digital Vault',
-            template: 'emailVerification', // Tell the service which template to use
-            verificationURL: verificationURL // Pass the correct URL
+            template: 'emailVerification',
+            verificationURL,
         });
 
-        await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', { email });
+        await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', {
+            email,
+            method: req.method,
+            ipAddress: req.ip,
+        });
 
         res.status(201).json({
             message: 'Registration successful! Please check your email to verify your account.'
         });
 
     } catch (error) {
+        await logActivity(null, 'REGISTER_ERROR', 'error', {
+            error: error.message,
+            method: req.method,
+            ipAddress: req.ip,
+        });
         console.error('REGISTER ERROR:', error);
         res.status(500).json({ message: 'Server Error during registration' });
     }
 };
+
+// const registerUser = async (req, res) => {
+//     try {
+//         const { name, email, password, role } = req.body;
+
+//         const userExists = await User.findOne({ email });
+//         if (userExists) {
+//             return res.status(400).json({ message: 'User with this email already exists' });
+//         }
+
+//         const user = await User.create({
+//             name,
+//             email,
+//             password,
+//             role,
+//             isVerified: false // Ensure user starts as unverified
+//         });
+
+//         // --- THIS IS THE CORRECTED LOGIC ---
+//         // 1. Generate a verification token (not a password reset token)
+//         const verificationToken = crypto.randomBytes(32).toString('hex');
+
+//         // 2. Hash it and save it to the correct field in the database
+//         user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+//         await user.save({ validateBeforeSave: false });
+
+//         // 3. Create the correct verification URL
+//         // This is the correct line. It creates a link to the backend API endpoint.
+//         const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
+
+//         // 4. Create the correct email message
+//         const message = `Welcome to Digital Vault! Please click the link below to verify your email address and activate your account:\n\n${verificationURL}`;
+
+//         // 5. Send the email
+//         await sendEmail({
+//             email: user.email,
+//             subject: 'Verify Your Email Address for Digital Vault',
+//             template: 'emailVerification', // Tell the service which template to use
+//             verificationURL: verificationURL // Pass the correct URL
+//         });
+
+//         await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', { email });
+
+//         res.status(201).json({
+//             message: 'Registration successful! Please check your email to verify your account.'
+//         });
+
+//     } catch (error) {
+//         console.error('REGISTER ERROR:', error);
+//         res.status(500).json({ message: 'Server Error during registration' });
+//     }
+// };
 // --- Helper Function to Generate JWT ---
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -82,92 +144,217 @@ const creatorDashboard = (req, res) => {
 // @desc    Verify user's email address
 // @route   GET /api/users/verify-email/:token
 // @access  Public
+// const verifyEmail = async (req, res) => {
+//     try {
+//         // 1. Get the plain token from the URL
+//         const verificationToken = req.params.token;
+
+//         // 2. Hash the token to find the matching token in the database
+//         const hashedToken = crypto
+//             .createHash('sha256')
+//             .update(verificationToken)
+//             .digest('hex');
+
+//         // 3. Find the user by the hashed token
+//         const user = await User.findOne({ emailVerificationToken: hashedToken });
+
+//         // 4. If no user is found, the token is invalid
+//         if (!user) {
+//             return res.status(400).send('<h1>Error</h1><p>Invalid verification token.</p>');
+//         }
+
+//         // 5. If the token is valid, update the user
+//         user.isVerified = true;
+//         user.emailVerificationToken = undefined; // Clear the token so it can't be used again
+//         await user.save();
+
+//         await logActivity(user._id, 'USER_EMAIL_VERIFIED', 'info', {});
+
+//         // Redirect the user to a success page on the frontend
+//         res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+
+//     } catch (error) {
+//         console.error('EMAIL VERIFICATION ERROR:', error);
+//         res.status(500).send('<h1>Error</h1><p>There was an error verifying your email.</p>');
+//     }
+// };
+
 const verifyEmail = async (req, res) => {
     try {
-        // 1. Get the plain token from the URL
         const verificationToken = req.params.token;
-
-        // 2. Hash the token to find the matching token in the database
         const hashedToken = crypto
             .createHash('sha256')
             .update(verificationToken)
             .digest('hex');
 
-        // 3. Find the user by the hashed token
         const user = await User.findOne({ emailVerificationToken: hashedToken });
 
-        // 4. If no user is found, the token is invalid
         if (!user) {
+            await logActivity(null, 'EMAIL_VERIFICATION_FAIL', 'warn', {
+                method: req.method,
+                ipAddress: req.ip,
+                reason: 'Invalid or expired token',
+            });
+
             return res.status(400).send('<h1>Error</h1><p>Invalid verification token.</p>');
         }
 
-        // 5. If the token is valid, update the user
         user.isVerified = true;
-        user.emailVerificationToken = undefined; // Clear the token so it can't be used again
+        user.emailVerificationToken = undefined;
         await user.save();
 
-        await logActivity(user._id, 'USER_EMAIL_VERIFIED', 'info', {});
+        await logActivity(user._id, 'USER_EMAIL_VERIFIED', 'info', {
+            email: user.email,
+            method: req.method,
+            ipAddress: req.ip,
+        });
 
-        // Redirect the user to a success page on the frontend
+        // Redirect to frontend success page
         res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
 
     } catch (error) {
+        await logActivity(null, 'EMAIL_VERIFICATION_ERROR', 'error', {
+            method: req.method,
+            ipAddress: req.ip,
+            error: error.message,
+        });
+
         console.error('EMAIL VERIFICATION ERROR:', error);
         res.status(500).send('<h1>Error</h1><p>There was an error verifying your email.</p>');
     }
 };
 
 
+
+// const loginUser = async (req, res) => {
+//     try {
+//         const { email, password } = req.body;
+//         const ipAddress = req.ip || req.connection.remoteAddress;
+
+//         // 1. Check for user
+//         const user = await User.findOne({ email });
+//         if (!user) {
+//             await logActivity(null, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress, reason: 'User not found' });
+//             return res.status(401).json({ message: 'Invalid email or password' });
+//         }
+
+//         // 2. Check if account is locked
+//         if (user.lockUntil && user.lockUntil > Date.now()) {
+//             await logActivity(user._id, 'USER_LOGIN_FAIL', 'fatal', { reason: 'Account locked', ipAddress });
+//             const timeLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
+//             return res.status(403).json({ message: `Account is locked. Please try again in ${timeLeft} minutes.` });
+//         }
+
+//         // 3. Check if password is correct
+//         if (!(await user.matchPassword(password))) {
+//             // If password fails, increment attempts and lock if necessary
+//             user.failedLoginAttempts += 1;
+//             if (user.failedLoginAttempts >= 10) {
+//                 user.lockUntil = Date.now() + 1 * 60 * 1000; // Lock for 30 mins
+//                 await logActivity(user._id, 'ACCOUNT_LOCKED', 'fatal', { ipAddress });
+//             }
+//             await user.save({ validateBeforeSave: false });
+//             await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress, attempts: user.failedLoginAttempts });
+//             return res.status(401).json({ message: 'Invalid email or password' });
+//         }
+
+//         // 4. Check if email is verified
+//         if (!user.isVerified) {
+//             await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', { reason: 'Email not verified', ipAddress });
+//             return res.status(403).json({ message: 'Please verify your email address to log in.' });
+//         }
+
+//         // --- ALL CHECKS PASSED: PROCEED WITH SUCCESSFUL LOGIN ---
+
+//         // Reset lock state on successful login
+//         user.failedLoginAttempts = 0;
+//         user.lockUntil = undefined;
+//         await user.save({ validateBeforeSave: false });
+
+//         // Proceed with MFA check or final login
+//         if (user.isMfaEnabled) {
+//             return res.json({ mfaRequired: true, userId: user._id });
+//         } else {
+//             await logActivity(user._id, 'USER_LOGIN_SUCCESS', 'info', { ipAddress });
+//             return res.status(200).json({
+//                 _id: user._id,
+//                 name: user.name,
+//                 email: user.email,
+//                 role: user.role,
+//                 token: generateToken(user._id),
+//             });
+//         }
+
+//     } catch (error) {
+//         await logActivity(null, 'LOGIN_CONTROLLER_ERROR', 'error', { error: error.message });
+//         res.status(500).json({ message: 'Server Error' });
+//     }
+// };
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
         const ipAddress = req.ip || req.connection.remoteAddress;
 
-        // 1. Check for user
         const user = await User.findOne({ email });
         if (!user) {
-            await logActivity(null, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress, reason: 'User not found' });
+            await logActivity(null, 'USER_LOGIN_FAIL', 'warn', {
+                email,
+                ipAddress,
+                method: req.method,
+                reason: 'User not found',
+            });
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        // 2. Check if account is locked
         if (user.lockUntil && user.lockUntil > Date.now()) {
-            await logActivity(user._id, 'USER_LOGIN_FAIL', 'fatal', { reason: 'Account locked', ipAddress });
+            await logActivity(user._id, 'USER_LOGIN_FAIL', 'fatal', {
+                ipAddress,
+                method: req.method,
+                reason: 'Account locked',
+            });
             const timeLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
-            return res.status(403).json({ message: `Account is locked. Please try again in ${timeLeft} minutes.` });
+            return res.status(403).json({ message: `Account is locked. Try again in ${timeLeft} minutes.` });
         }
 
-        // 3. Check if password is correct
         if (!(await user.matchPassword(password))) {
-            // If password fails, increment attempts and lock if necessary
             user.failedLoginAttempts += 1;
             if (user.failedLoginAttempts >= 10) {
-                user.lockUntil = Date.now() + 1 * 60 * 1000; // Lock for 30 mins
-                await logActivity(user._id, 'ACCOUNT_LOCKED', 'fatal', { ipAddress });
+                user.lockUntil = Date.now() + 1 * 60 * 1000;
+                await logActivity(user._id, 'ACCOUNT_LOCKED', 'fatal', {
+                    ipAddress,
+                    method: req.method,
+                });
             }
             await user.save({ validateBeforeSave: false });
-            await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', { email, ipAddress, attempts: user.failedLoginAttempts });
+            await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', {
+                email,
+                ipAddress,
+                method: req.method,
+                attempts: user.failedLoginAttempts,
+            });
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        // 4. Check if email is verified
         if (!user.isVerified) {
-            await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', { reason: 'Email not verified', ipAddress });
-            return res.status(403).json({ message: 'Please verify your email address to log in.' });
+            await logActivity(user._id, 'USER_LOGIN_FAIL', 'warn', {
+                ipAddress,
+                method: req.method,
+                reason: 'Email not verified',
+            });
+            return res.status(403).json({ message: 'Please verify your email address.' });
         }
 
-        // --- ALL CHECKS PASSED: PROCEED WITH SUCCESSFUL LOGIN ---
-
-        // Reset lock state on successful login
         user.failedLoginAttempts = 0;
         user.lockUntil = undefined;
         await user.save({ validateBeforeSave: false });
 
-        // Proceed with MFA check or final login
         if (user.isMfaEnabled) {
             return res.json({ mfaRequired: true, userId: user._id });
         } else {
-            await logActivity(user._id, 'USER_LOGIN_SUCCESS', 'info', { ipAddress });
+            await logActivity(user._id, 'USER_LOGIN_SUCCESS', 'info', {
+                ipAddress,
+                method: req.method,
+            });
             return res.status(200).json({
                 _id: user._id,
                 name: user.name,
@@ -178,7 +365,10 @@ const loginUser = async (req, res) => {
         }
 
     } catch (error) {
-        await logActivity(null, 'LOGIN_CONTROLLER_ERROR', 'error', { error: error.message });
+        await logActivity(null, 'LOGIN_CONTROLLER_ERROR', 'error', {
+            error: error.message,
+            method: req.method,
+        });
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -255,89 +445,262 @@ const updatePassword = async (req, res) => {
 
 // In backend/controllers/userController.js
 
-const forgotPassword = async (req, res) => {
-    let user; // <-- The fix is to declare the user variable here
-    try {
-        // 1. Get user based on posted email
-        user = await User.findOne({ email: req.body.email });
+// const forgotPassword = async (req, res) => {
+//     let user; // <-- The fix is to declare the user variable here
+//     try {
+//         // 1. Get user based on posted email
+//         user = await User.findOne({ email: req.body.email });
 
-        // If there's no user, send a success response to prevent email enumeration
+//         // If there's no user, send a success response to prevent email enumeration
+//         if (!user) {
+//             return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+//         }
+
+//         // 2. Generate and save the reset token and expiry
+//         const resetToken = crypto.randomBytes(32).toString('hex');
+//         user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+//         user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+//         await user.save({ validateBeforeSave: false });
+
+//         // --- Replace it with this NEW section ---
+//         const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+//         await sendEmail({
+//             email: user.email,
+//             subject: 'Your Digital Vault Password Reset Token (valid for 10 min)',
+//             resetURL: resetURL // Pass the URL to the email service
+//         });
+
+//         res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+
+//     } catch (error) {
+//         // Now the 'user' variable is accessible here
+//         if (user) {
+//             user.passwordResetToken = undefined;
+//             user.passwordResetExpires = undefined;
+//             await user.save({ validateBeforeSave: false });
+//         }
+//         console.error('FORGOT PASSWORD ERROR:', error);
+//         res.status(500).json({ message: "There was an error sending the email. Please try again later." });
+//     }
+// };
+
+const forgotPassword = async (req, res) => {
+    let user;
+    try {
+        const email = req.body.email;
+        user = await User.findOne({ email });
+
+        // Regardless of whether user exists, respond with success message to avoid enumeration
         if (!user) {
-            return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+            await logActivity(null, 'FORGOT_PASSWORD_NO_USER', 'warn', {
+                email,
+                method: req.method,
+                ipAddress: req.ip
+            });
+
+            return res.status(200).json({
+                message: 'If an account with that email exists, a password reset link has been sent.'
+            });
         }
 
-        // 2. Generate and save the reset token and expiry
+        // Generate reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
         user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        user.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+        user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save({ validateBeforeSave: false });
 
-        // --- Replace it with this NEW section ---
+        // Prepare reset URL
         const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
+        // Send email
         await sendEmail({
             email: user.email,
             subject: 'Your Digital Vault Password Reset Token (valid for 10 min)',
-            resetURL: resetURL // Pass the URL to the email service
+            resetURL
         });
 
-        res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        await logActivity(user._id, 'FORGOT_PASSWORD_REQUESTED', 'info', {
+            email,
+            method: req.method,
+            ipAddress: req.ip
+        });
+
+        res.status(200).json({
+            message: 'If an account with that email exists, a password reset link has been sent.'
+        });
 
     } catch (error) {
-        // Now the 'user' variable is accessible here
         if (user) {
             user.passwordResetToken = undefined;
             user.passwordResetExpires = undefined;
             await user.save({ validateBeforeSave: false });
         }
+
+        await logActivity(user?._id || null, 'FORGOT_PASSWORD_ERROR', 'error', {
+            error: error.message,
+            method: req.method,
+            ipAddress: req.ip
+        });
+
         console.error('FORGOT PASSWORD ERROR:', error);
-        res.status(500).json({ message: "There was an error sending the email. Please try again later." });
+        res.status(500).json({
+            message: 'There was an error sending the email. Please try again later.'
+        });
     }
 };
+
 
 // @desc    Generate a secret and QR code for MFA setup
 // @route   POST /api/users/mfa/setup
 // @access  Private
+// const mfaSetup = async (req, res) => {
+//     try {
+//         // Generate a new MFA secret for the user
+//         const secret = speakeasy.generateSecret({
+//             name: `DigitalVault (${req.user.email})`, // This name will appear in their authenticator app
+//         });
+
+//         // Find the user in the database
+//         const user = await User.findById(req.user.id);
+
+//         // Save the temporary secret to the user's document
+//         user.mfaTempSecret = secret.base32;
+//         await user.save();
+
+//         // Generate a QR code image from the secret's otpauth_url
+//         qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+//             if (err) {
+//                 throw new Error('Could not generate QR code');
+//             }
+//             // Send the QR code image data back to the frontend
+//             res.json({
+//                 qrCodeUrl: data_url,
+//                 // secret: secret.base32
+//             });
+//         });
+
+//     } catch (error) {
+//         console.error('MFA setup error:', error);
+//         await logActivity(req.user?._id, 'MFA_SETUP_FAIL', 'error', { error: error.message });
+//         res.status(500).json({ message: 'Server Error during MFA setup' });
+//     }
+// };
+
 const mfaSetup = async (req, res) => {
     try {
-        // Generate a new MFA secret for the user
-        const secret = speakeasy.generateSecret({
-            name: `DigitalVault (${req.user.email})`, // This name will appear in their authenticator app
-        });
-
-        // Find the user in the database
         const user = await User.findById(req.user.id);
 
-        // Save the temporary secret to the user's document
+        const secret = speakeasy.generateSecret({
+            name: `DigitalVault (${user.email})`,
+        });
+
         user.mfaTempSecret = secret.base32;
         await user.save();
 
-        // Generate a QR code image from the secret's otpauth_url
-        qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+        qrcode.toDataURL(secret.otpauth_url, async (err, data_url) => {
             if (err) {
+                await logActivity(user._id, 'MFA_QR_GENERATION_FAIL', 'error', {
+                    error: err.message,
+                    method: req.method,
+                    ipAddress: req.ip,
+                });
                 throw new Error('Could not generate QR code');
             }
-            // Send the QR code image data back to the frontend
-            res.json({
-                qrCodeUrl: data_url,
-                // secret: secret.base32
-            });
-        });
 
+            await logActivity(user._id, 'MFA_SETUP_INITIATED', 'info', {
+                method: req.method,
+                ipAddress: req.ip,
+            });
+
+            res.json({ qrCodeUrl: data_url });
+        });
     } catch (error) {
         console.error('MFA setup error:', error);
-        await logActivity(req.user?._id, 'MFA_SETUP_FAIL', 'error', { error: error.message });
+        await logActivity(req.user?._id, 'MFA_SETUP_FAIL', 'error', {
+            error: error.message,
+            method: req.method,
+            ipAddress: req.ip,
+        });
         res.status(500).json({ message: 'Server Error during MFA setup' });
     }
 };
 
 
+
+// const mfaVerify = async (req, res) => {
+//     try {
+//         const { token } = req.body;
+//         const user = await User.findById(req.user.id);
+
+//         if (!user.mfaTempSecret) {
+//             return res.status(400).json({ message: 'MFA setup has not been initiated.' });
+//         }
+
+//         const isVerified = speakeasy.totp.verify({
+//             secret: user.mfaTempSecret,
+//             encoding: 'base32',
+//             token: token,
+//             window: 1
+//         });
+
+//         if (isVerified) {
+//             // --- NEW: Generate and save recovery codes ---
+//             const recoveryCodes = [];
+//             const hashedRecoveryCodes = [];
+
+//             for (let i = 0; i < 10; i++) {
+//                 // Create a simple, random 8-character code
+//                 const code = crypto.randomBytes(4).toString('hex');
+//                 recoveryCodes.push(code);
+
+//                 // Hash the code before saving it to the database
+//                 const hashCode = crypto.createHash('sha256').update(code).digest('hex');
+//                 hashedRecoveryCodes.push(hashCode);
+//             }
+
+//             user.mfaRecoveryCodes = hashedRecoveryCodes; // Save hashed codes
+
+//             // Finalize MFA enablement
+//             user.mfaSecret = user.mfaTempSecret;
+//             user.mfaTempSecret = undefined;
+//             user.isMfaEnabled = true;
+//             await user.save();
+
+//             await logActivity(user._id, 'MFA_ENABLE_SUCCESS', 'info', { ipAddress: req.ip });
+
+//             // Send the plain-text codes back to the user ONCE.
+//             res.json({
+//                 message: 'MFA has been successfully enabled! Please save these recovery codes.',
+//                 recoveryCodes: recoveryCodes, // Send plain codes to the user
+//             });
+//         } else {
+//             await logActivity(user._id, 'MFA_ENABLE_FAIL', 'warn', { ipAddress: req.ip });
+//             res.status(400).json({ message: 'Invalid MFA token. Please try again.' });
+//         }
+//     } catch (error) {
+//         console.error('MFA verification error:', error);
+//         await logActivity(req.user?._id, 'MFA_VERIFY_FAIL', 'error', { error: error.message });
+//         res.status(500).json({ message: 'Server Error during MFA verification' });
+//     }
+// };
+
+// In backend/controllers/userController.js
+
+// @desc    Log in using a one-time MFA recovery code
+// @route   POST /api/users/mfa/recover
+// @access  Public
 const mfaVerify = async (req, res) => {
     try {
         const { token } = req.body;
         const user = await User.findById(req.user.id);
 
         if (!user.mfaTempSecret) {
+            await logActivity(user._id, 'MFA_VERIFY_FAIL', 'warn', {
+                method: req.method,
+                ipAddress: req.ip,
+                reason: 'Temp secret not found',
+            });
             return res.status(400).json({ message: 'MFA setup has not been initiated.' });
         }
 
@@ -349,78 +712,88 @@ const mfaVerify = async (req, res) => {
         });
 
         if (isVerified) {
-            // --- NEW: Generate and save recovery codes ---
             const recoveryCodes = [];
             const hashedRecoveryCodes = [];
 
             for (let i = 0; i < 10; i++) {
-                // Create a simple, random 8-character code
                 const code = crypto.randomBytes(4).toString('hex');
                 recoveryCodes.push(code);
-
-                // Hash the code before saving it to the database
-                const hashCode = crypto.createHash('sha256').update(code).digest('hex');
-                hashedRecoveryCodes.push(hashCode);
+                hashedRecoveryCodes.push(crypto.createHash('sha256').update(code).digest('hex'));
             }
 
-            user.mfaRecoveryCodes = hashedRecoveryCodes; // Save hashed codes
-
-            // Finalize MFA enablement
+            user.mfaRecoveryCodes = hashedRecoveryCodes;
             user.mfaSecret = user.mfaTempSecret;
             user.mfaTempSecret = undefined;
             user.isMfaEnabled = true;
             await user.save();
 
-            await logActivity(user._id, 'MFA_ENABLE_SUCCESS', 'info', { ipAddress: req.ip });
+            await logActivity(user._id, 'MFA_ENABLE_SUCCESS', 'info', {
+                method: req.method,
+                ipAddress: req.ip,
+            });
 
-            // Send the plain-text codes back to the user ONCE.
             res.json({
                 message: 'MFA has been successfully enabled! Please save these recovery codes.',
-                recoveryCodes: recoveryCodes, // Send plain codes to the user
+                recoveryCodes: recoveryCodes,
             });
         } else {
-            await logActivity(user._id, 'MFA_ENABLE_FAIL', 'warn', { ipAddress: req.ip });
+            await logActivity(user._id, 'MFA_ENABLE_FAIL', 'warn', {
+                method: req.method,
+                ipAddress: req.ip,
+                reason: 'Invalid token',
+            });
             res.status(400).json({ message: 'Invalid MFA token. Please try again.' });
         }
     } catch (error) {
         console.error('MFA verification error:', error);
-        await logActivity(req.user?._id, 'MFA_VERIFY_FAIL', 'error', { error: error.message });
+        await logActivity(req.user?._id, 'MFA_VERIFY_FAIL', 'error', {
+            error: error.message,
+            method: req.method,
+            ipAddress: req.ip,
+        });
         res.status(500).json({ message: 'Server Error during MFA verification' });
     }
 };
 
-// In backend/controllers/userController.js
-
-// @desc    Log in using a one-time MFA recovery code
-// @route   POST /api/users/mfa/recover
-// @access  Public
 const mfaRecover = async (req, res) => {
+    let user;
     try {
         const { email, recoveryCode } = req.body;
 
         if (!email || !recoveryCode) {
+            await logActivity(null, 'MFA_RECOVERY_MISSING_FIELDS', 'warn', {
+                method: req.method,
+                ipAddress: req.ip,
+                email
+            });
             return res.status(400).json({ message: 'Email and recovery code are required.' });
         }
 
-        const user = await User.findOne({ email });
+        user = await User.findOne({ email });
 
-        // Hash the provided recovery code to compare with what's in the database
         const hashedCode = crypto.createHash('sha256').update(recoveryCode).digest('hex');
 
-        // Check if the user exists and if the hashed code is in their list of recovery codes
         if (!user || !user.mfaRecoveryCodes.includes(hashedCode)) {
-            await logActivity(user?._id, 'MFA_RECOVERY_FAIL', 'fatal', { email, ipAddress: req.ip });
+            await logActivity(user?._id || null, 'MFA_RECOVERY_FAIL', 'fatal', {
+                email,
+                method: req.method,
+                ipAddress: req.ip,
+                reason: 'Invalid recovery code or user not found'
+            });
             return res.status(401).json({ message: 'Invalid recovery code or email.' });
         }
 
-        // --- If the code is valid ---
-        // 1. Remove the used code from the array to make it single-use
+        // Remove used code (make it single-use)
         user.mfaRecoveryCodes = user.mfaRecoveryCodes.filter(code => code !== hashedCode);
         await user.save();
 
-        // 2. Log the user in by issuing a new JWT
-        await logActivity(user._id, 'MFA_RECOVERY_SUCCESS', 'info', { ipAddress: req.ip });
-        res.status(200).json({
+        await logActivity(user._id, 'MFA_RECOVERY_SUCCESS', 'info', {
+            method: req.method,
+            ipAddress: req.ip,
+            email
+        });
+
+        return res.status(200).json({
             _id: user._id,
             name: user.name,
             email: user.email,
@@ -430,9 +803,57 @@ const mfaRecover = async (req, res) => {
 
     } catch (error) {
         console.error('MFA recovery error:', error);
+        await logActivity(user?._id || null, 'MFA_RECOVERY_ERROR', 'error', {
+            error: error.message,
+            method: req.method,
+            ipAddress: req.ip,
+            email
+        });
         res.status(500).json({ message: 'Server Error during MFA recovery' });
     }
 };
+
+
+
+// const mfaRecover = async (req, res) => {
+//     try {
+//         const { email, recoveryCode } = req.body;
+
+//         if (!email || !recoveryCode) {
+//             return res.status(400).json({ message: 'Email and recovery code are required.' });
+//         }
+
+//         const user = await User.findOne({ email });
+
+//         // Hash the provided recovery code to compare with what's in the database
+//         const hashedCode = crypto.createHash('sha256').update(recoveryCode).digest('hex');
+
+//         // Check if the user exists and if the hashed code is in their list of recovery codes
+//         if (!user || !user.mfaRecoveryCodes.includes(hashedCode)) {
+//             await logActivity(user?._id, 'MFA_RECOVERY_FAIL', 'fatal', { email, ipAddress: req.ip });
+//             return res.status(401).json({ message: 'Invalid recovery code or email.' });
+//         }
+
+//         // --- If the code is valid ---
+//         // 1. Remove the used code from the array to make it single-use
+//         user.mfaRecoveryCodes = user.mfaRecoveryCodes.filter(code => code !== hashedCode);
+//         await user.save();
+
+//         // 2. Log the user in by issuing a new JWT
+//         await logActivity(user._id, 'MFA_RECOVERY_SUCCESS', 'info', { ipAddress: req.ip });
+//         res.status(200).json({
+//             _id: user._id,
+//             name: user.name,
+//             email: user.email,
+//             role: user.role,
+//             token: generateToken(user._id),
+//         });
+
+//     } catch (error) {
+//         console.error('MFA recovery error:', error);
+//         res.status(500).json({ message: 'Server Error during MFA recovery' });
+//     }
+// };
 // In backend/controllers/userController.js
 
 // @desc    Verify MFA token during login and grant access
@@ -600,6 +1021,17 @@ const deleteUserByAdmin = async (req, res) => {
     }
 };
 
+const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
 
 
 
@@ -619,6 +1051,7 @@ module.exports = {
     verifyEmail, // Export the email verification function
     getUsers,// Export the getUsers function
     updateUserByAdmin, // Export the updateUserByAdmin function
-    deleteUserByAdmin // Export the deleteUserByAdmin function
+    deleteUserByAdmin, // Export the deleteUserByAdmin function
+    getUserById // Export the getUserById function
 
 };
