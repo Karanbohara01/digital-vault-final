@@ -242,7 +242,7 @@ const LandingPage = () => {
                     font-size: 2.5rem;
                     font-weight: 800;
                     margin-bottom: 1rem;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg,rgb(6, 6, 6) 0%,rgb(2, 2, 2) 100%);
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
@@ -377,9 +377,9 @@ const LandingPage = () => {
 
                 .filter-btn:hover,
                 .filter-btn.active {
-                    background: #667eea;
+                    background:rgb(3, 3, 3);
                     color: white;
-                    border-color: #667eea;
+                    border-color:rgb(9, 9, 10);
                     transform: translateY(-2px);
                 }
 
@@ -475,7 +475,7 @@ const LandingPage = () => {
                 /* Stats Section */
                 .stats-section {
                     padding: 4rem 2rem;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg,rgb(9, 9, 9) 0%,rgb(6, 6, 6) 100%);
                     color: white;
                 }
 
@@ -542,12 +542,12 @@ const LandingPage = () => {
 
                 .newsletter-input:focus {
                     outline: none;
-                    border-color: #667eea;
+                    border-color:rgb(3, 7, 26);
                 }
 
                 .newsletter-btn {
                     padding: 1rem 2rem;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(135deg,rgb(1, 4, 14) 0%,rgb(15, 2, 29) 100%);
                     color: white;
                     border: none;
                     border-radius: 8px;
@@ -558,7 +558,7 @@ const LandingPage = () => {
 
                 .newsletter-btn:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+                    box-shadow: 0 8px 25px rgba(11, 11, 12, 0.3);
                 }
 
                 .success-message {
