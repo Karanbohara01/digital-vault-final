@@ -1,0 +1,57 @@
+/* Refined BLACK THEME Stats Section */
+.stats-section {
+    background: #000;
+    /* deep black */
+    padding: 5rem 2rem;
+    text-align: center;
+    color: white;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.stat-item {
+    background: #111;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 0 transparent;
+    transition: all 0.3s ease;
+    border: 1px solid #222;
+}
+
+.stat-item:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: block;
+    letter-spacing: -1px;
+}
+
+.stat-label {
+    font-size: 1rem;
+    text-transform: uppercase;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-number {
+        font-size: 2.2rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+    }
+}
