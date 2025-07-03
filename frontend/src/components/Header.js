@@ -1,120 +1,5 @@
 
 
-
-// import React, { useContext } from 'react';
-// import { Link, useNavigate } from 'react-router-dom';
-// import { AuthContext } from '../context/AuthContext';
-
-// const Header = () => {
-//     const { isAuthenticated, logout, user } = useContext(AuthContext);
-//     const navigate = useNavigate();
-
-//     const handleLogout = () => {
-//         logout();
-//         navigate('/login');
-//     };
-
-//     const styles = {
-//         header: {
-//             backgroundColor: '#1f2937',
-//             padding: '1rem 2rem',
-//             color: '#ffffff',
-//             display: 'flex',
-//             justifyContent: 'space-between',
-//             alignItems: 'center',
-//             boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-//             position: 'sticky',
-//             top: 0,
-//             zIndex: 999,
-//         },
-//         logo: {
-//             fontSize: '1.6rem',
-//             fontWeight: 'bold',
-//             color: '#ffffff',
-//             textDecoration: 'none',
-//         },
-//         nav: {
-//             display: 'flex',
-//             gap: '1.5rem',
-//             alignItems: 'center',
-//         },
-//         link: {
-//             color: '#cbd5e0',
-//             textDecoration: 'none',
-//             fontSize: '1rem',
-//             transition: 'color 0.2s ease',
-//         },
-//         button: {
-//             backgroundColor: '#ef4444',
-//             color: 'white',
-//             border: 'none',
-//             padding: '0.4rem 1rem',
-//             borderRadius: '5px',
-//             cursor: 'pointer',
-//             fontWeight: 'bold',
-//             fontSize: '0.9rem',
-//             transition: 'background-color 0.2s ease',
-//         },
-//         profile: {
-//             display: 'flex',
-//             alignItems: 'center',
-//             gap: '0.5rem',
-//             backgroundColor: '#374151',
-//             padding: '0.4rem 0.8rem',
-//             borderRadius: '20px',
-//             color: '#fff',
-//             textDecoration: 'none',
-//             fontSize: '0.9rem',
-//         },
-//         avatar: {
-//             backgroundColor: '#4b5563',
-//             borderRadius: '50%',
-//             width: '30px',
-//             height: '30px',
-//             display: 'flex',
-//             alignItems: 'center',
-//             justifyContent: 'center',
-//             fontSize: '0.9rem',
-//             color: '#fff',
-//         },
-//     };
-
-//     const getInitial = () => {
-//         if (user?.name) return user.name.charAt(0).toUpperCase();
-//         return 'U';
-//     };
-
-//     return (
-//         <header style={styles.header}>
-//             <Link to="/" style={styles.logo}>📦 Digital Vault</Link>
-
-//             <nav style={styles.nav}>
-//                 <Link to="/" style={styles.link}>Home</Link>
-
-//                 {isAuthenticated ? (
-//                     <>
-//                         <Link to="/dashboard" style={styles.profile}>
-//                             <div style={styles.avatar}>{getInitial()}</div>
-//                             <span>{user?.name || 'Profile'}</span>
-//                         </Link>
-
-//                         <button onClick={handleLogout} style={styles.button}>
-//                             Logout
-//                         </button>
-//                     </>
-//                 ) : (
-//                     <>
-//                         <Link to="/login" style={styles.link}>Login</Link>
-//                         <Link to="/register" style={styles.link}>Register</Link>
-//                     </>
-//                 )}
-//             </nav>
-//         </header>
-//     );
-// };
-
-// export default Header;
-
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
@@ -237,8 +122,54 @@ const Header = () => {
         return 'U';
     };
 
+    // Inline responsive CSS
+    const responsiveStyle = `
+@media (max-width: 768px) {
+    .header-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding-top: 1rem;
+    }
+    .header-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .header-nav a,
+    .header-nav button {
+        font-size: 14px !important;
+    }
+}
+`;
+
+
     return (
-        <header style={styles.header}>
+        <header style={styles.header} className="header-wrapper">
+            {/* Responsive CSS injection */}
+            <style>{`
+            @media (max-width: 768px) {
+                .header-wrapper {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 1rem;
+                    padding: 16px;
+                }
+
+                .header-nav {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                }
+
+                .header-nav a,
+                .header-nav button {
+                    font-size: 14px !important;
+                    width: 100%;
+                }
+            }
+        `}</style>
+
             <Link
                 to="/"
                 style={styles.logo}
@@ -248,7 +179,7 @@ const Header = () => {
                 <Logo />
             </Link>
 
-            <nav style={styles.nav}>
+            <nav style={styles.nav} className="header-nav">
                 <Link
                     to="/"
                     style={styles.homeLink}
@@ -328,6 +259,7 @@ const Header = () => {
             </nav>
         </header>
     );
+
 };
 
 export default Header;
