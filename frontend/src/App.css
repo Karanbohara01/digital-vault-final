@@ -32,7 +32,15 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
+
+
+/* img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+} */

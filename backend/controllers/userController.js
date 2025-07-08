@@ -10,68 +10,78 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/EmailService'); // Import the email service
 
 
-const registerUser = async (req, res) => {
-    try {
-        const { name, email, password, role } = req.body;
+// const registerUser = async (req, res) => {
+//     try {
+//         const { name, email, password, role } = req.body;
+//         if (
+//             typeof name !== 'string' ||
+//             typeof password !== 'string' ||
+//             typeof email !== 'string' ||
+//             !['customer', 'creator'].includes(role)
+//         ) {
+//             return res.status(400).json({ message: 'Invalid input format' });
+//         }
 
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            await logActivity(null, 'USER_REGISTER_FAIL', 'warn', {
-                reason: 'Email already exists',
-                email,
-                method: req.method,
-                ipAddress: req.ip,
-            });
-            return res.status(400).json({ message: 'User with this email already exists' });
-        }
 
-        const user = await User.create({
-            name,
-            email,
-            password,
-            role,
-            isVerified: false
-        });
 
-        const verificationToken = crypto.randomBytes(32).toString('hex');
-        user.emailVerificationToken = crypto
-            .createHash('sha256')
-            .update(verificationToken)
-            .digest('hex');
+//         const userExists = await User.findOne({ email });
+//         if (userExists) {
+//             await logActivity(null, 'USER_REGISTER_FAIL', 'warn', {
+//                 reason: 'Email already exists',
+//                 email,
+//                 method: req.method,
+//                 ipAddress: req.ip,
+//             });
+//             return res.status(400).json({ message: 'User with this email already exists' });
+//         }
 
-        await user.save({ validateBeforeSave: false });
+//         const user = await User.create({
+//             name,
+//             email,
+//             password,
+//             role,
+//             isVerified: false
+//         });
 
-        const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
+//         const verificationToken = crypto.randomBytes(32).toString('hex');
+//         user.emailVerificationToken = crypto
+//             .createHash('sha256')
+//             .update(verificationToken)
+//             .digest('hex');
 
-        const message = `Welcome to Digital Vault! Please click the link below to verify your email address and activate your account:\n\n${verificationURL}`;
+//         await user.save({ validateBeforeSave: false });
 
-        await sendEmail({
-            email: user.email,
-            subject: 'Verify Your Email Address for Digital Vault',
-            template: 'emailVerification',
-            verificationURL,
-        });
+//         const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
 
-        await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', {
-            email,
-            method: req.method,
-            ipAddress: req.ip,
-        });
+//         const message = `Welcome to Digital Vault! Please click the link below to verify your email address and activate your account:\n\n${verificationURL}`;
 
-        res.status(201).json({
-            message: 'Registration successful! Please check your email to verify your account.'
-        });
+//         await sendEmail({
+//             email: user.email,
+//             subject: 'Verify Your Email Address for Digital Vault',
+//             template: 'emailVerification',
+//             verificationURL,
+//         });
 
-    } catch (error) {
-        await logActivity(null, 'REGISTER_ERROR', 'error', {
-            error: error.message,
-            method: req.method,
-            ipAddress: req.ip,
-        });
-        console.error('REGISTER ERROR:', error);
-        res.status(500).json({ message: 'Server Error during registration' });
-    }
-};
+//         await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', {
+//             email,
+//             method: req.method,
+//             ipAddress: req.ip,
+//         });
+
+//         res.status(201).json({
+//             message: 'Registration successful! Please check your email to verify your account.'
+//         });
+
+//     } catch (error) {
+//         await logActivity(null, 'REGISTER_ERROR', 'error', {
+//             error: error.message,
+//             method: req.method,
+//             ipAddress: req.ip,
+//         });
+//         console.error('REGISTER ERROR:', error);
+//         res.status(500).json({ message: 'Server Error during registration' });
+//     }
+// };
 
 // const registerUser = async (req, res) => {
 //     try {
@@ -131,6 +141,88 @@ const generateToken = (id) => {
         expiresIn: '30d', // Token will be valid for 30 days
     });
 };
+
+
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,64}$/;
+
+const registerUser = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        // --- Validate input types ---
+        if (
+            typeof name !== 'string' ||
+            typeof password !== 'string' ||
+            typeof email !== 'string' ||
+            !['customer', 'creator'].includes(role)
+        ) {
+            return res.status(400).json({ message: 'Invalid input format' });
+        }
+
+        // --- Enforce password complexity policy ---
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                message: 'Password must be 8-64 characters long and include uppercase, lowercase, number, and special character.'
+            });
+        }
+
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            await logActivity(null, 'USER_REGISTER_FAIL', 'warn', {
+                reason: 'Email already exists',
+                email,
+                method: req.method,
+                ipAddress: req.ip,
+            });
+            return res.status(400).json({ message: 'User with this email already exists' });
+        }
+
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role,
+            isVerified: false
+        });
+
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        user.emailVerificationToken = crypto
+            .createHash('sha256')
+            .update(verificationToken)
+            .digest('hex');
+
+        await user.save({ validateBeforeSave: false });
+
+        const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
+
+        await sendEmail({
+            email: user.email,
+            subject: 'Verify Your Email Address for Digital Vault',
+            template: 'emailVerification',
+            verificationURL,
+        });
+
+        await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', {
+            email,
+            method: req.method,
+            ipAddress: req.ip,
+        });
+
+        res.status(201).json({
+            message: 'Registration successful! Please check your email to verify your account.'
+        });
+
+    } catch (error) {
+        await logActivity(null, 'REGISTER_ERROR', 'error', {
+            error: error.message,
+            method: req.method,
+            ipAddress: req.ip,
+        });
+        console.error('REGISTER ERROR:', error);
+        res.status(500).json({ message: 'Server Error during registration' });
+    }
+};
+
 
 // @desc    Placeholder for a creator-only action
 // @route   GET /api/users/creator-dashboard

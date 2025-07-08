@@ -813,6 +813,11 @@ import { AuthContext } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import SettingsPage from './SettingsPage';
 import './DashboardPage.css';
+import { FaTrash } from 'react-icons/fa'; // Font Awesome trash icon
+// or
+import { FiTrash2 } from 'react-icons/fi'; // Feather trash icon
+// or
+import { RiDeleteBinLine } from 'react-icons/ri'; // Remix icon
 
 const DashboardPage = () => {
     const { user, token } = useContext(AuthContext);
@@ -1124,7 +1129,7 @@ const DashboardPage = () => {
                                                                 className="btn btn-danger"
                                                                 onClick={() => handleDeleteLog(log._id)}
                                                             >
-                                                                Delete
+                                                                <FiTrash2 className="btn-icon" /> Delete
                                                             </button>
                                                         </td>
                                                     )}

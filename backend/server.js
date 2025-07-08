@@ -10,6 +10,9 @@ const hotlinkProtect = require('./middleware/hotlinkProtection');
 // const mongoSanitize = require('express-mongo-sanitize'); // Import the package
 const logRoutes = require('./routes/logRoutes'); // 1. Import log routes
 
+const sanitizeRequest = require('./middleware/sanitizeBody');
+const testRoutes = require('./routes/testRoutes');
+
 
 
 dotenv.config();
@@ -28,6 +31,8 @@ const app = express();
 // app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 app.use('/uploads', hotlinkProtect, express.static(path.join(__dirname, '/uploads')));
 app.use(cors());
+app.use(sanitizeRequest);
+app.use('/api/test', testRoutes);
 
 
 app.use(helmet());
@@ -46,6 +51,8 @@ app.use(express.json());
 // app.use(mongoSanitize({
 //     replaceWith: '_' // Replaces prohibited characters with an underscore
 // }));
+
+app.use(sanitizeRequest);
 
 
 // Mount the rest of the routers that need JSON parsing
