@@ -21,7 +21,7 @@ const authLimiter = rateLimit({
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100,
-    message: 'Too many requests from this IP, please try again after 15 minutes!',
+    message: 'Too many requests from this IP, please try again after 15 minutes',
     handler: (req, res, next, options) => {
         logActivity(null, 'API_RATE_LIMIT_EXCEEDED', 'error', { ipAddress: req.ip });
         res.status(options.statusCode).send(options.message);
