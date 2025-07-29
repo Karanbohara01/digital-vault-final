@@ -154,7 +154,7 @@ const ActivityLogs = () => {
                 </>
             ) : (
                 <div className="empty-state">
-                    <p>No activity logs founds.</p>
+                    <p>No activity logs found.</p>
                 </div>
             )}
         </div>
