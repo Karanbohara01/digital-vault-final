@@ -621,7 +621,7 @@ const getUsers = async (req, res) => {
 
 
 const updateUserByAdmin = async (req, res) => {
-    console.log('✅ updateUserByAdmin called');
+    console.log(' updateUserByAdmin called');
 
     try {
         const user = await User.findById(req.params.id);
