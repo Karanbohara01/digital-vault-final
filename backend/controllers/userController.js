@@ -566,8 +566,10 @@ const mfaLoginVerify = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     try {
+        // 1. Get the plain token from the URL
         const resetToken = req.params.token;
 
+        // 2. Hash the token to find the matching token in the database
         const hashedToken = crypto
             .createHash('sha256')
             .update(resetToken)
@@ -598,7 +600,7 @@ const resetPassword = async (req, res) => {
         await logActivity(user._id, 'USER_PASSWORD_RESET_SUCCESS', 'info', { ipAddress: req.ip });
         res.status(200).json({
             token: generateToken(user._id),
-            message: 'Password reset successfully.'
+            message: 'Password reset successfullys.'
         });
 
     } catch (error) {
@@ -652,7 +654,7 @@ const updateUserByAdmin = async (req, res) => {
 
 
 const deleteUserByAdmin = async (req, res) => {
-    console.log('✅ deleteUserByAdmin called');
+    console.log('deleteUserByAdmin called');
 
     try {
         const user = await User.findById(req.params.id);
