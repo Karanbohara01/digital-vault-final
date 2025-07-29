@@ -81,7 +81,7 @@ const ProductDetailPage = () => {
                     <h2 style={styles.errorHeading}>Something went wrong</h2>
                     <p style={styles.errorMessage}>{error}</p>
                     <Link to="/" style={styles.backLink}>
-                        Go back home
+                        Go back homes
                     </Link>
                 </div>
             </div>
