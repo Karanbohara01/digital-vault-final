@@ -600,7 +600,7 @@ const resetPassword = async (req, res) => {
         await logActivity(user._id, 'USER_PASSWORD_RESET_SUCCESS', 'info', { ipAddress: req.ip });
         res.status(200).json({
             token: generateToken(user._id),
-            message: 'Password reset successfullys.'
+            message: 'Password reset successfully.'
         });
 
     } catch (error) {
