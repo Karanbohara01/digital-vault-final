@@ -12,7 +12,7 @@ const hotlinkProtect = (req, res, next) => {
         next();
     } else {
 
-        res.status(403).send('Hotlinking is not allowed.');
+        res.status(403).send('Hotlinking is not alloweded.');
     }
 };
 
