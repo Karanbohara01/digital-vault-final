@@ -16,7 +16,6 @@ const generateToken = (id) => {
     });
 };
 
-
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,64}$/;
 
 
@@ -53,7 +52,7 @@ const registerUser = async (req, res) => {
         const user = await User.create({
             name,
             email,
-            password, // Password will be hashed by the pre-save hook
+            password,
             role,
             isVerified: false
         });
@@ -630,8 +629,7 @@ const updateUserByAdmin = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Admin can update name, email, and role.
-        // We don't allow changing the password from this endpoint for security.
+
         user.name = req.body.name || user.name;
         user.email = req.body.email || user.email;
         user.role = req.body.role || user.role;

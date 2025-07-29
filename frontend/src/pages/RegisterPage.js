@@ -48,7 +48,7 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!captchaToken) {
-            setError("Please complete the CAPTCHA to verify you're not a robot.");
+            setError("Please complete the CAPTCHA to verify you're not a roboots.");
             return;
         }
         setError(null);
