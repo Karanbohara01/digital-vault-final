@@ -65,7 +65,7 @@
     font-size: 0.95rem;
     background: #fff;
     transition: all 0.2s ease;
-    width: 90%;
+    width: 100%;
 }
 
 .role-select:focus {
