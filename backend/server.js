@@ -35,7 +35,7 @@ connectDB();
 
 // --- GLOBAL MIDDLEWARE SETUP (Order is crucial) ---
 
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origins" } }));
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.set('trust proxy', 1);
 
