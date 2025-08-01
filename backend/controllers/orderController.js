@@ -71,56 +71,98 @@ const getMyOrders = async (req, res) => {
 };
 
 
+// const createCheckoutSession = async (req, res) => {
+//     try {
+//         const { productId } = req.body;
+//         const product = await Product.findById(productId);
+
+//         if (!product) {
+//             await logActivity(req.user._id, 'CHECKOUT_SESSION_FAIL', 'warn', {
+//                 productId,
+//                 reason: 'Product not found',
+//                 method: req.method,
+//             });
+//             return res.status(404).json({ message: 'Product not found' });
+//         }
+
+//         const session = await stripe.checkout.sessions.create({
+//             payment_method_types: ['card'],
+//             mode: 'payment',
+//             line_items: [{
+//                 price_data: {
+//                     currency: 'usd',
+//                     product_data: { name: product.name },
+//                     unit_amount: Math.round(product.price * 100),
+//                 },
+//                 quantity: 1,
+//             }],
+//             success_url: `https://localhost:3000/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+//             cancel_url: `https://localhost:3000/payment-cancelled`,
+//             metadata: {
+//                 userId: req.user._id.toString(),
+//                 productId: product._id.toString(),
+//             }
+//         });
+
+//         await logActivity(req.user._id, 'CHECKOUT_SESSION_CREATED', 'info', {
+//             productId,
+//             stripeSessionId: session.id,
+//             method: req.method,
+//         });
+
+//         res.status(200).json({ url: session.url });
+//     } catch (error) {
+//         console.error('Checkout Session Error:', error.message);
+//         await logActivity(req.user._id, 'CHECKOUT_SESSION_ERROR', 'error', {
+//             error: error.message,
+//             method: req.method,
+//         });
+//         res.status(500).json({ message: 'Server Error creating checkout session', error: error.message });
+//     }
+// };
+
+
+// In backend/controllers/orderController.js
+
 const createCheckoutSession = async (req, res) => {
     try {
         const { productId } = req.body;
         const product = await Product.findById(productId);
 
         if (!product) {
-            await logActivity(req.user._id, 'CHECKOUT_SESSION_FAIL', 'warn', {
-                productId,
-                reason: 'Product not found',
-                method: req.method,
-            });
             return res.status(404).json({ message: 'Product not found' });
         }
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            mode: 'payment',
             line_items: [{
                 price_data: {
                     currency: 'usd',
-                    product_data: { name: product.name },
-                    unit_amount: Math.round(product.price * 100),
+                    product_data: {
+                        name: product.name,
+                        images: [`${process.env.BACKEND_URL || 'https://localhost:5001'}/${product.filePath}`],
+                    },
+                    unit_amount: product.price * 100,
                 },
                 quantity: 1,
             }],
-            success_url: `http://localhost:3000/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `http://localhost:3000/payment-cancelled`,
+            mode: 'payment',
+            // --- THIS IS THE FIX ---
+            // Use the FRONTEND_URL from your .env file to build the correct secure URL
+            success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.FRONTEND_URL}/products/${productId}`,
             metadata: {
-                userId: req.user._id.toString(),
                 productId: product._id.toString(),
+                userId: req.user._id.toString()
             }
         });
 
-        await logActivity(req.user._id, 'CHECKOUT_SESSION_CREATED', 'info', {
-            productId,
-            stripeSessionId: session.id,
-            method: req.method,
-        });
-
-        res.status(200).json({ url: session.url });
+        res.json({ url: session.url });
     } catch (error) {
-        console.error('Checkout Session Error:', error.message);
-        await logActivity(req.user._id, 'CHECKOUT_SESSION_ERROR', 'error', {
-            error: error.message,
-            method: req.method,
-        });
-        res.status(500).json({ message: 'Server Error creating checkout session', error: error.message });
+        console.error("Error creating checkout session:", error);
+        res.status(500).json({ message: "Server Error creating checkout session" });
     }
 };
-
 
 const handleStripeWebhook = (req, res) => {
     const signature = req.headers['stripe-signature'];

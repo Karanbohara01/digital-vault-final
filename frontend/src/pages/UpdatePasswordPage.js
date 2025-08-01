@@ -23,7 +23,7 @@ const UpdatePasswordPage = () => {
         setSuccess(null);
 
         try {
-            const response = await fetch('http://localhost:5001/api/users/update-password', {
+            const response = await fetch('/api/users/update-password', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

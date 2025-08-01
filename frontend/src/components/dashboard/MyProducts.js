@@ -11,7 +11,7 @@ const MyProducts = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const response = await fetch('http://localhost:5001/api/products/my-products', {
+                const response = await fetch('/api/products/my-products', {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
                 const data = await response.json();

@@ -10,7 +10,7 @@ const MyOrders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await fetch('http://localhost:5001/api/orders/my-orders', {
+                const response = await fetch('/api/orders/my-orders', {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
                 const data = await response.json();

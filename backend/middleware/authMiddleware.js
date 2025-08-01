@@ -15,9 +15,7 @@ const protect = async (req, res, next) => {
             // 2. Verify the token using our secret key
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // 3. Get the user's data from the database using the ID in the token
-            // We attach the user to the request object so it can be accessed in any protected route
-            // We exclude the password from being attached to the request object
+
             req.user = await User.findById(decoded.id).select('-password');
 
             // --- CHECK FOR PASSWORD EXPIRY ---
@@ -46,8 +44,7 @@ const authorize = (...roles) => {
     return (req, res, next) => {
         // 'req.user' is attached by our 'protect' middleware
         if (!req.user || !roles.includes(req.user.role)) {
-            // 403 Forbidden is more appropriate than 401 Unauthorized here.
-            // The user IS authenticated, but they don't have PERMISSION.
+
             return res.status(403).json({ message: 'Your role is not authorized to access this route' });
         }
         next();

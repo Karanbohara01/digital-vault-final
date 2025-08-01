@@ -27,7 +27,7 @@ const EditProductPage = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`http://localhost:5001/api/products/${productId}`);
+                const response = await fetch(`/api/products/${productId}`);
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.message || 'Could not fetch product data.');
 
@@ -38,7 +38,7 @@ const EditProductPage = () => {
                 setCategory(data.category);
                 // --- NEW: Set the image preview URL ---
                 if (data.filePath) {
-                    setImagePreviewUrl(`http://localhost:5001/${data.filePath}`);
+                    setImagePreviewUrl(`/${data.filePath}`);
                 }
             } catch (err) {
                 setError(err.message);
@@ -56,7 +56,7 @@ const EditProductPage = () => {
         setSuccess(null);
 
         try {
-            const response = await fetch(`http://localhost:5001/api/products/${productId}`, {
+            const response = await fetch(`/api/products/${productId}`, {
                 method: 'PUT', // Use PUT for updating
                 headers: {
                     'Content-Type': 'application/json',

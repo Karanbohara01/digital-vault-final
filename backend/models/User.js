@@ -114,3 +114,103 @@ userSchema.pre('save', function (next) {
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
+
+
+
+
+
+// const mongoose = require('mongoose');
+// const bcrypt = require('bcryptjs');
+// const { encrypt, decrypt } = require('../utils/encryptionService');
+
+// const userSchema = new mongoose.Schema({
+//     name: {
+//         type: String,
+//         required: [true, 'Please provide your name'],
+//         get: decrypt
+//     },
+//     email: {
+//         type: String,
+//         required: [true, 'Please provide your email'],
+//         unique: true,
+//         lowercase: true,
+//         get: decrypt
+//     },
+//     role: {
+//         type: String,
+//         enum: ['customer', 'creator', 'admin'],
+//         default: 'customer',
+//     },
+//     password: {
+//         type: String,
+//         required: [true, 'A password is required'],
+//         minlength: 8
+//     },
+//     isVerified: {
+//         type: Boolean,
+//         default: false
+//     },
+//     emailVerificationToken: String,
+//     passwordChangedAt: Date,
+//     passwordHistory: [String],
+//     passwordResetToken: String,
+//     passwordResetExpires: Date,
+//     isMfaEnabled: {
+//         type: Boolean,
+//         default: false
+//     },
+//     mfaSecret: String,
+//     mfaTempSecret: String,
+//     mfaRecoveryCodes: {
+//         type: [String]
+//     },
+//     failedLoginAttempts: {
+//         type: Number,
+//         default: 0
+//     },
+//     lockUntil: Date,
+// }, {
+//     timestamps: true,
+//     // These options are crucial for the 'getters' to work automatically
+//     toJSON: { getters: true },
+//     toObject: { getters: true }
+// });
+
+// // --- COMBINED PRE-SAVE MIDDLEWARE ---
+// userSchema.pre('save', async function (next) {
+//     // --- 1. Encrypt name and email if they have been modified ---
+//     if (this.isModified('name')) {
+//         // Use .set() to bypass the 'decrypt' getter when setting an already plain-text value.
+//         // this.get('name', null, { getters: false }) ensures we get the raw, un-decrypted value to re-encrypt.
+//         this.set('name', encrypt(this.get('name', null, { getters: false })), { strict: false });
+//     }
+//     if (this.isModified('email')) {
+//         this.set('email', encrypt(this.get('email', null, { getters: false })), { strict: false });
+//     }
+
+//     // --- 2. Handle password hashing if it has been modified ---
+//     if (this.isModified('password')) {
+//         // Add the previous password to history if this is an existing user
+//         if (!this.isNew) {
+//             const user = await this.constructor.findOne({ _id: this._id });
+//             if (user && user.password) {
+//                 this.passwordHistory.unshift(user.password);
+//                 if (this.passwordHistory.length > 5) {
+//                     this.passwordHistory.pop();
+//                 }
+//             }
+//         }
+//         const salt = await bcrypt.genSalt(12);
+//         this.password = await bcrypt.hash(this.password, salt);
+//     }
+
+//     next();
+// });
+
+// // Instance method to compare passwords for login
+// userSchema.methods.matchPassword = async function (enteredPassword) {
+//     return await bcrypt.compare(enteredPassword, this.password);
+// };
+
+// const User = mongoose.model('User', userSchema);
+// module.exports = User;

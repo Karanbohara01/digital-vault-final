@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { createProduct, getProducts, getProductById, getMyProducts, downloadProductFile, updateProduct, deleteProduct } = require('../controllers/productController');
 const { protect, authorize } = require('../middleware/authMiddleware');
-const upload = require('../middleware/uploadMiddleware'); // 1. Import the upload middleware
+const upload = require('../middleware/uploadMiddleware');
 
 // ... (your get routes remain unchanged)
 router.get('/', getProducts);

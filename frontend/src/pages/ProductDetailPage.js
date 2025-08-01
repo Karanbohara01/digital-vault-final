@@ -23,7 +23,7 @@ const ProductDetailPage = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await fetch(`http://localhost:5001/api/products/${productId}`);
+                const response = await fetch(`/api/products/${productId}`);
                 if (!response.ok) throw new Error('Product not found!');
                 const data = await response.json();
                 setProduct(data);
@@ -46,7 +46,7 @@ const ProductDetailPage = () => {
         setError(null);
 
         try {
-            const response = await fetch('http://localhost:5001/api/orders/create-checkout-session', {
+            const response = await fetch('/api/orders/create-checkout-session', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ const ProductDetailPage = () => {
             {/* Main Image */}
             <div style={styles.imageContainer}>
                 <img
-                    src={`http://localhost:5001/${product.filePath}`}
+                    src={`https://localhost:5001/${product.filePath}`}
                     alt={product.name}
                     style={styles.mainImage}
                     onError={(e) => {

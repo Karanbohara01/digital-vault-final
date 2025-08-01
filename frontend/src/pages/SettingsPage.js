@@ -20,7 +20,7 @@ const UpdatePasswordForm = () => {
         setError(null);
         setSuccess(null);
         try {
-            const response = await fetch('http://localhost:5001/api/users/update-password', {
+            const response = await fetch('/api/users/update-password', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -154,7 +154,7 @@ ${recoveryCodes.join('\n')}
         setError(null);
         setSuccess(null);
         try {
-            const response = await fetch('http://localhost:5001/api/users/mfa/setup', {
+            const response = await fetch('/api/users/mfa/setup', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -171,7 +171,7 @@ ${recoveryCodes.join('\n')}
         setError(null);
         setSuccess(null);
         try {
-            const response = await fetch('http://localhost:5001/api/users/mfa/verify', {
+            const response = await fetch('/api/users/mfa/verify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

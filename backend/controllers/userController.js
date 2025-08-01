@@ -19,72 +19,122 @@ const generateToken = (id) => {
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,64}$/;
 
 
+// const registerUser = async (req, res) => {
+//     try {
+//         const { name, email, password, role, captchaToken } = req.body;
+//         const ipAddress = req.ip || req.connection.remoteAddress;
+
+//         // 1. CAPTCHA Validation (Runs first)
+//         if (!captchaToken) {
+//             return res.status(400).json({ message: 'CAPTCHA token is required.' });
+//         }
+//         const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`;
+//         const recaptchaResponse = await axios.post(verifyUrl);
+
+//         if (!recaptchaResponse.data.success) {
+//             await logActivity(null, 'USER_REGISTER_FAIL', 'fatal', { email, ipAddress, reason: 'CAPTCHA verification failed.' });
+//             return res.status(400).json({ message: 'CAPTCHA verification failed. Please try again.' });
+//         }
+
+//         // 2. Input Validation
+//         if (!name || !email || !password) {
+//             return res.status(400).json({ message: 'Please enter all required fields.' });
+//         }
+
+//         // 3. Check if user already exists
+//         const userExists = await User.findOne({ email });
+//         if (userExists) {
+//             await logActivity(null, 'USER_REGISTER_FAIL', 'warn', { email, ipAddress, reason: 'Email already exists.' });
+//             return res.status(400).json({ message: 'User with this email already exists.' });
+//         }
+
+//         // 4. Create User
+//         const user = await User.create({
+//             name,
+//             email,
+//             password,
+//             role,
+//             isVerified: false
+//         });
+
+//         // 5. Generate Verification Token and Send Email
+//         const verificationToken = crypto.randomBytes(32).toString('hex');
+//         user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+//         await user.save({ validateBeforeSave: false });
+
+//         const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
+
+//         await sendEmail({
+//             email: user.email,
+//             subject: 'Verify Your Email Address for Digital Vault',
+//             template: 'emailVerification',
+//             verificationURL: verificationURL,
+//         });
+
+//         await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', { email, ipAddress });
+
+//         res.status(201).json({
+//             message: 'Registration successful! Please check your email to verify your account.'
+//         });
+
+//     } catch (error) {
+//         console.error('REGISTER ERROR:', error);
+//         await logActivity(null, 'REGISTER_CONTROLLER_ERROR', 'error', { error: error.message });
+//         res.status(500).json({ message: 'Server Error during registration' });
+//     }
+
+// };
+
 const registerUser = async (req, res) => {
     try {
         const { name, email, password, role, captchaToken } = req.body;
         const ipAddress = req.ip || req.connection.remoteAddress;
 
-        // 1. CAPTCHA Validation (Runs first)
-        if (!captchaToken) {
-            return res.status(400).json({ message: 'CAPTCHA token is required.' });
-        }
-        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`;
-        const recaptchaResponse = await axios.post(verifyUrl);
+        // // 1. CAPTCHA Validation
+        // if (!captchaToken) {
+        //     return res.status(400).json({ message: 'CAPTCHA token is required.' });
+        // }
+        // const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`;
+        // const recaptchaResponse = await axios.post(verifyUrl);
 
-        if (!recaptchaResponse.data.success) {
-            await logActivity(null, 'USER_REGISTER_FAIL', 'fatal', { email, ipAddress, reason: 'CAPTCHA verification failed.' });
-            return res.status(400).json({ message: 'CAPTCHA verification failed. Please try again.' });
-        }
+        // if (!recaptchaResponse.data.success) {
+        //     await logActivity(null, 'USER_REGISTER_FAIL', 'fatal', { email, ipAddress, reason: 'CAPTCHA verification failed.' });
+        //     return res.status(400).json({ message: 'CAPTCHA verification failed. Please try again.' });
+        // }
 
-        // 2. Input Validation
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Please enter all required fields.' });
-        }
-
-        // 3. Check if user already exists
+        // 2. Input Validation & User Exists Check (using plain-text email)
         const userExists = await User.findOne({ email });
         if (userExists) {
-            await logActivity(null, 'USER_REGISTER_FAIL', 'warn', { email, ipAddress, reason: 'Email already exists.' });
             return res.status(400).json({ message: 'User with this email already exists.' });
         }
 
-        // 4. Create User
-        const user = await User.create({
-            name,
-            email,
-            password,
-            role,
-            isVerified: false
-        });
+        // 3. Create User
+        const user = await User.create({ name, email, password, role });
 
-        // 5. Generate Verification Token and Send Email
+        // 4. Send Verification Email
         const verificationToken = crypto.randomBytes(32).toString('hex');
         user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
         await user.save({ validateBeforeSave: false });
 
         const verificationURL = `${req.protocol}://${req.get('host')}/api/users/verify-email/${verificationToken}`;
-
         await sendEmail({
             email: user.email,
             subject: 'Verify Your Email Address for Digital Vault',
             template: 'emailVerification',
-            verificationURL: verificationURL,
+            verificationURL,
         });
 
-        await logActivity(user._id, 'USER_REGISTER_SUCCESS', 'info', { email, ipAddress });
-
-        res.status(201).json({
-            message: 'Registration successful! Please check your email to verify your account.'
-        });
+        res.status(201).json({ message: 'Registration successful! Please check your email.' });
 
     } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ message: messages.join('. ') });
+        }
         console.error('REGISTER ERROR:', error);
-        await logActivity(null, 'REGISTER_CONTROLLER_ERROR', 'error', { error: error.message });
         res.status(500).json({ message: 'Server Error during registration' });
     }
 };
-
-
 
 const creatorDashboard = (req, res) => {
     res.status(200).json({ success: true, message: `Welcome Creator ${req.user.name}!` });

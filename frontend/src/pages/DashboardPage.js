@@ -35,13 +35,13 @@ const DashboardPage = () => {
 
             // Determine the correct API endpoint based on the active tab and user role
             if (activeTab === 'orders' && user.role === 'customer') {
-                url = 'http://localhost:5001/api/orders/my-orders';
+                url = '/api/orders/my-orders';
             } else if (activeTab === 'products' && user.role === 'creator') {
-                url = 'http://localhost:5001/api/products/my-products';
+                url = '/api/products/my-products';
             } else if (activeTab === 'users' && user.role === 'admin') {
-                url = 'http://localhost:5001/api/users'; // Use the new admin route
+                url = '/api/users'; // Use the new admin route
             } else if (activeTab === 'logs' && user.role === 'admin') {
-                url = 'http://localhost:5001/api/logs'; // Use the new admin route
+                url = '/api/logs'; // Use the new admin route
             } else {
                 setLoading(false);
                 return; // Exit if the role doesn't match the tab
@@ -68,7 +68,7 @@ const DashboardPage = () => {
     const handleDeleteProduct = async (productId) => {
         if (!window.confirm('Are you sure you want to permanently delete this product?')) return;
         try {
-            const response = await fetch(`http://localhost:5001/api/products/${productId}`, {
+            const response = await fetch(`/api/products/${productId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ const DashboardPage = () => {
         if (!window.confirm('Are you sure you want to delete this log?')) return;
 
         try {
-            const res = await fetch(`http://localhost:5001/api/logs/${logId}`, {
+            const res = await fetch(`/api/logs/${logId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -103,7 +103,7 @@ const DashboardPage = () => {
     const handleDeleteUser = async (userId, userName) => {
         if (!window.confirm(`Are you sure you want to permanently delete the user: ${userName}? This action cannot be undone.`)) return;
         try {
-            const response = await fetch(`http://localhost:5001/api/users/${userId}`, {
+            const response = await fetch(`/api/users/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -118,7 +118,7 @@ const DashboardPage = () => {
     const handleDownload = async (productId, productName) => {
         if (!productId || !productName) return alert('Product data is missing.');
         try {
-            const response = await fetch(`http://localhost:5001/api/products/${productId}/download`, {
+            const response = await fetch(`/api/products/${productId}/download`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'X-Requested-With': 'XMLHttpRequest' // CSRF protection
@@ -178,7 +178,7 @@ const DashboardPage = () => {
                                 <tbody>
                                     {data.map(product => (
                                         <tr key={product._id}>
-                                            <td><div className="product-info"><img className="product-thumbnail" src={`http://localhost:5001/${product.filePath}`} alt={product.name} /><span>{product.name}</span></div></td>
+                                            <td><div className="product-info"><img className="product-thumbnail" src={`/${product.filePath}`} alt={product.name} /><span>{product.name}</span></div></td>
                                             <td>${product.price.toFixed(2)}</td>
                                             <td><span className="category-badge">{product.category}</span></td>
                                             <td>

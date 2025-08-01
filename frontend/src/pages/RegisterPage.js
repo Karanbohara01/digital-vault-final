@@ -327,6 +327,24 @@ const RegisterPage = () => {
                             <option value="creator">Creator</option>
                         </select>
                     </div>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        margin: '24px 0',
+                        color: '#E5E7EB',
+                    }}>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }} />
+                        <span style={{ padding: '0 12px', fontSize: '12px', color: '#6B7280' }}>OR</span>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }} />
+                    </div>
+                    <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+                        <ReCAPTCHA
+                            sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+                            onChange={(token) => setCaptchaToken(token)}
+                            onExpired={() => setCaptchaToken(null)}
+                        />
+                    </div>
+
 
                     <button
                         type="submit"
@@ -363,23 +381,6 @@ const RegisterPage = () => {
                         ) : 'Create Account'}
                     </button>
 
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        margin: '24px 0',
-                        color: '#E5E7EB',
-                    }}>
-                        <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }} />
-                        <span style={{ padding: '0 12px', fontSize: '12px', color: '#6B7280' }}>OR</span>
-                        <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E7EB' }} />
-                    </div>
-                    <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-                        <ReCAPTCHA
-                            sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
-                            onChange={(token) => setCaptchaToken(token)}
-                            onExpired={() => setCaptchaToken(null)}
-                        />
-                    </div>
 
                     <button
                         type="button"
